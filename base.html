@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+<head>
+  <title>{{ title or Configs.ctf_name }}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="start_in" content="{{ ctf_starts_in() }}">
+  <meta name="ends_in" content="{{ ctf_ends_in() }}">
+  <link rel="shortcut icon" href="{{ Configs.ctf_small_icon }}" type="image/x-icon">
+
+  {{ meta | safe }}
+
+  {% block stylesheets %}
+    {{ Assets.css("assets/scss/main.scss") }}
+  {% endblock %}
+
+  {{ Plugins.styles }}
+
+  <script type="text/javascript">
+      window.init = {
+          'urlRoot': "{{ request.script_root }}",
+          'csrfNonce': "{{ Session.nonce }}",
+          'userMode': "{{ Configs.user_mode }}",
+          'userId': {{ Session.id }},
+          'userName': {{ User.name | tojson }},
+          'userEmail': {{ User.email | tojson }},
+          'teamId': {{ Team.id | tojson }},
+          'teamName': {{ Team.name | tojson }},
+          'start': {{ Configs.start | tojson }},
+          'end': {{ Configs.end | tojson }},
+          'themeSettings': {{ Configs.theme_settings | tojson }},
+          'eventSounds': [
+            "/themes/core/static/sounds/notification.webm",
+            "/themes/core/static/sounds/notification.mp3",
+          ],
+      }
+  </script>
+
+  {{ Configs.theme_header }}
+</head>
+<body>
+{% include "components/navbar.html" %}
+
+<main role="main">
+  {% block content %}
+  {% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="container text-center">
+    <a href="https://ctfd.io" class="text-secondary">
+      <small class="text-muted">
+        {% trans %}Powered by CTFd{% endtrans %}
+      </small>
+    </a>
+  </div>
+</footer>
+
+{% include "components/notifications.html" %}
+
+{% block scripts %}
+  {{ Assets.js("assets/js/page.js") }}
+{% endblock %}
+
+{{ Plugins.scripts }}
+
+
+<!-- Among Us Background Music -->
+<audio id="theme-music" loop autoplay>
+    <source src="/themes/atr25-theme/static/audio/theme.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+      const audio = document.getElementById('theme-music');
+      const storageKey = 'among-us-music-time';
+
+      if (audio) {
+          audio.volume = 0.2; // Set low volume
+
+          // 1. Check if we have a saved time from the previous page
+          const savedTime = localStorage.getItem(storageKey);
+          if (savedTime) {
+              audio.currentTime = parseFloat(savedTime);
+          }
+
+          // 2. Save the current time before the user leaves the page
+          window.addEventListener('beforeunload', () => {
+              localStorage.setItem(storageKey, audio.currentTime);
+          });
+
+          // 3. Attempt to play
+          const playPromise = audio.play();
+          
+          if (playPromise !== undefined) {
+              playPromise.catch(error => {
+                  console.log("Autoplay was blocked by the browser. Waiting for interaction...");
+                  // Fallback: If blocked, play on first click so it eventually works
+                  document.addEventListener('click', () => {
+                      audio.play();
+                  }, { once: true });
+              });
+          }
+      }
+  });
+</script>
+
+{{ Configs.theme_footer }}
+</body>
+</html>
